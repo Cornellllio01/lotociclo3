@@ -15,10 +15,16 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.cornellllio.lotociclo3",
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",
         "monochromeImage": "./assets/android-icon-monochrome.png",
         "backgroundColor": "#0d0d1a"
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "8b5c9069-90da-4029-813a-71f82cdcaa13"
       }
     }
   }

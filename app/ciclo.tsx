@@ -75,7 +75,7 @@ export default function Ciclo() {
         </View>
       )}
       <TouchableOpacity style={s.btnFixas} onPress={definirFixas}>
-        <Text style={s.btnFixasText}>🔒 Definir Top 4 como Fixas</Text>
+        <Text style={s.btnFixasText}>🔒 Definir Fixas do Ciclo</Text>
       </TouchableOpacity>
       {ciclo && (
         <View style={s.card}>

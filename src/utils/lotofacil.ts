@@ -17,12 +17,14 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 export function montarJogo(saíram: number[], naoSairam: number[], fixas: number[]) {
-  const sairamSemFixas = saíram.filter(d => !fixas.includes(d));
-  const qtdAleatorias = 15 - 6 - fixas.length;
+  const fixasValidas = fixas.filter(d => saíram.includes(d));
+  const sairamSemFixas = saíram.filter(d => !fixasValidas.includes(d));
+  const qtdAleatorias = 15 - 6 - fixasValidas.length;
   const aleatorias = shuffle(sairamSemFixas).slice(0, qtdAleatorias);
-  const grupo9 = [...fixas, ...aleatorias];
+  const grupo9 = [...fixasValidas, ...aleatorias];
   const grupo6 = shuffle(naoSairam.filter(d => !grupo9.includes(d))).slice(0, 6);
-  const dezenas = [...grupo9, ...grupo6].sort((a, b) => a - b);
+  const dezenas = [...new Set([...grupo9, ...grupo6])].sort((a, b) => a - b);
+  if (dezenas.length !== 15) throw new Error(`Jogo inválido: ${dezenas.length} dezenas`);
   return { dezenas, grupo6, grupo9 };
 }
 

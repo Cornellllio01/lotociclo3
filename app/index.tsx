@@ -19,6 +19,25 @@ export default function Home() {
         const f = await getFixas();
         const todos = await listarConcursos();
         setUltimo(u); setCiclo(c); setFixas(f); setTotalConcursos(todos.length);
+
+        // Busca automática silenciosa ao abrir
+        try {
+            const r = await buscarUltimoConcurso();
+            const jaExiste = todos.find(c => c.numero === r.numero);
+            if (!jaExiste) {
+                await salvarConcurso({ numero: r.numero, data: r.data, dezenas: r.dezenas });
+                const cicloAtual = await getCiclo();
+                if (cicloAtual) await atualizarCiclo(r.dezenas, r.numero);
+                // Recarrega dados atualizados
+                const u2 = await ultimoConcurso();
+                const c2 = await getCiclo();
+                const f2 = await getFixas();
+                const todos2 = await listarConcursos();
+                setUltimo(u2); setCiclo(c2); setFixas(f2); setTotalConcursos(todos2.length);
+            }
+        } catch {
+            // Silencioso — sem internet não mostra erro
+        }
     }
 
     async function buscarDaCaixa() {

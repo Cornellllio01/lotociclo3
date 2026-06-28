@@ -7,7 +7,6 @@ export default function Resultado() {
   const [numero, setNumero] = useState('');
   const [data, setData] = useState('');
   const [selecionadas, setSelecionadas] = useState<number[]>([]);
-  const [iniciaCiclo, setIniciaCiclo] = useState(false);
 
   function toggleDezena(d: number) {
     setSelecionadas(prev =>
@@ -22,14 +21,23 @@ export default function Resultado() {
     }
     const n = parseInt(numero);
     await salvarConcurso({ numero: n, data, dezenas: selecionadas.sort((a,b)=>a-b) });
-    if (iniciaCiclo) {
+    const ciclo = await getCiclo();
+    if (!ciclo) {
+      // Primeiro concurso ever — inicia ciclo
       await resetarCiclo(n);
       await atualizarCiclo(selecionadas, n);
-      Alert.alert('✅ Salvo!', `Concurso ${n} salvo e novo ciclo iniciado!`);
+      Alert.alert('✅ Salvo!', `Concurso ${n} salvo. Novo ciclo iniciado!`);
     } else {
-      const ciclo = await getCiclo();
-      if (ciclo) await atualizarCiclo(selecionadas, n);
-      Alert.alert('✅ Salvo!', `Concurso ${n} registrado!`);
+      const concursosCiclo = n - ciclo.inicio + 1;
+      if (concursosCiclo >= 6) {
+        // 6 concursos completos — reseta e começa novo ciclo
+        await resetarCiclo(n);
+        await atualizarCiclo(selecionadas, n);
+        Alert.alert('✅ Novo Ciclo!', `Concurso ${n} salvo. Ciclo reiniciado automaticamente!`);
+      } else {
+        await atualizarCiclo(selecionadas, n);
+        Alert.alert('✅ Salvo!', `Concurso ${n} registrado! (${concursosCiclo}/6 no ciclo)`);
+      }
     }
     router.back();
   }
@@ -54,9 +62,6 @@ export default function Resultado() {
           <Text style={s.previewText}>{selecionadas.sort((a,b)=>a-b).map(d => String(d).padStart(2,'0')).join(' — ')}</Text>
         </View>
       )}
-      <TouchableOpacity style={[s.toggleBtn, iniciaCiclo && s.toggleBtnAtivo]} onPress={() => setIniciaCiclo(!iniciaCiclo)}>
-        <Text style={s.toggleText}>{iniciaCiclo ? '🔄 Iniciando novo ciclo' : '➕ Continuar ciclo atual'}</Text>
-      </TouchableOpacity>
       <TouchableOpacity style={[s.btnSalvar, selecionadas.length === 15 && s.btnSalvarAtivo]} onPress={salvar}>
         <Text style={s.btnSalvarText}>💾 Salvar Resultado</Text>
       </TouchableOpacity>
@@ -77,9 +82,6 @@ const s = StyleSheet.create({
   preview: { backgroundColor: '#12102a', borderRadius: 10, padding: 12, marginTop: 16, borderWidth: 1, borderColor: '#2a2060' },
   previewLabel: { fontSize: 10, color: '#6b6a8a', marginBottom: 6 },
   previewText: { color: '#c4b5fd', fontSize: 13, fontWeight: 'bold' },
-  toggleBtn: { marginTop: 16, padding: 12, borderRadius: 10, backgroundColor: '#1f2937', alignItems: 'center' },
-  toggleBtnAtivo: { backgroundColor: '#92400e' },
-  toggleText: { color: '#fff', fontSize: 13 },
   btnSalvar: { marginTop: 20, padding: 16, borderRadius: 12, backgroundColor: '#374151', alignItems: 'center' },
   btnSalvarAtivo: { backgroundColor: '#15803d' },
   btnSalvarText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Clipboard, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Clipboard } from 'react-native';
 import { ultimoConcurso, getFixas } from '../src/storage/db';
 import { calcularGrupos, montarJogo } from '../src/utils/lotofacil';
 import { buscarConcursoPorNumero, buscarUltimoConcurso } from '../src/utils/caixa';
@@ -13,7 +13,6 @@ export default function Jogos() {
   const [ultimo, setUltimo] = useState<any>(null);
   const [resultado, setResultado] = useState<number[]>([]);
   const [conferindo, setConferindo] = useState(false);
-  const [numeroBusca, setNumeroBusca] = useState('');
 
   useEffect(() => { carregar(); }, []);
 
@@ -38,15 +37,12 @@ export default function Jogos() {
     );
   }
 
-  async function buscarResultadoConferencia(numero: string) {
-    const n = parseInt(numero);
-    if (!n || n < 1) return;
+  async function buscarResultadoConferencia() {
     try {
-      const r = await buscarConcursoPorNumero(n);
+      const r = await buscarUltimoConcurso();
       setResultado(r.dezenas);
-      Alert.alert('✅ Carregado!', `Concurso ${r.numero} de ${r.data}`);
     } catch {
-      Alert.alert('Erro', `Concurso ${n} não encontrado.`);
+      // Sem internet — mantém manual
     }
   }
 
@@ -105,20 +101,7 @@ export default function Jogos() {
       )}
       {conferindo && (
         <View style={s.card}>
-          <Text style={s.label}>RESULTADO DO CONCURSO ({resultado.length}/15)</Text>
-          <View style={s.buscaRow}>
-            <TextInput
-              style={s.buscaInput}
-              value={numeroBusca}
-              onChangeText={setNumeroBusca}
-              keyboardType="numeric"
-              placeholder="Nº concurso"
-              placeholderTextColor="#4a4a6a"
-            />
-            <TouchableOpacity style={s.buscaBtn} onPress={() => buscarResultadoConferencia(numeroBusca)}>
-              <Text style={s.buscaBtnText}>🔍 Buscar</Text>
-            </TouchableOpacity>
-          </View>
+          <Text style={s.label}>RESULTADO DO PRÓXIMO CONCURSO ({resultado.length}/15)</Text>
           <View style={s.bolasRow}>
             {Array.from({length: 25}, (_, i) => i + 1).map(d => (
               <TouchableOpacity
@@ -193,8 +176,4 @@ const s = StyleSheet.create({
   btnConferirAtivo: { backgroundColor: '#7f1d1d' },
   bolaConferir: { width: 34, height: 34, borderRadius: 17, backgroundColor: '#1e1b40', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#2a2060' },
   bolaConferirSel: { backgroundColor: '#4c1d95', borderColor: '#7c3aed' },
-  buscaRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  buscaInput: { flex: 1, backgroundColor: '#1e1b40', borderRadius: 8, padding: 10, color: '#fff', borderWidth: 1, borderColor: '#2a2060', fontSize: 14 },
-  buscaBtn: { backgroundColor: '#1d4ed8', borderRadius: 8, padding: 10, justifyContent: 'center' },
-  buscaBtnText: { color: '#fff', fontSize: 13, fontWeight: 'bold' },
 });
