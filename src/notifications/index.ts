@@ -14,6 +14,9 @@ const ID_NOVO_RESULTADO = 'lotociclo-novo-resultado';
 let initialized = false;
 
 function getNotificationsLib() {
+  if (isExpoGo) {
+    return null;
+  }
   const Notifications = require('expo-notifications');
   if (!initialized) {
     initialized = true;
@@ -37,6 +40,7 @@ function getNotificationsLib() {
 export async function solicitarPermissao(): Promise<boolean> {
   try {
     const Notifications = getNotificationsLib();
+    if (!Notifications) return false;
     const { status: existing } = await Notifications.getPermissionsAsync();
     if (existing === 'granted') return true;
 
@@ -54,6 +58,7 @@ export async function agendarLembrete(hora: number, minuto: number): Promise<str
 
   try {
     const Notifications = getNotificationsLib();
+    if (!Notifications) return '';
     const id = await Notifications.scheduleNotificationAsync({
       identifier: ID_LEMBRETE,
       content: {
@@ -77,6 +82,7 @@ export async function agendarLembrete(hora: number, minuto: number): Promise<str
 export async function cancelarLembrete(): Promise<void> {
   try {
     const Notifications = getNotificationsLib();
+    if (!Notifications) return;
     await Notifications.cancelScheduledNotificationAsync(ID_LEMBRETE).catch(() => {});
   } catch (err) {
     console.warn('Erro ao cancelar lembrete:', err);
@@ -92,15 +98,17 @@ export async function verificarNovoResultado(db: SQLiteDatabase): Promise<boolea
     const numeroLocal = local?.numero ?? 0;
     if (caixa.numero > numeroLocal) {
       const Notifications = getNotificationsLib();
-      await Notifications.scheduleNotificationAsync({
-        identifier: ID_NOVO_RESULTADO,
-        content: {
-          title: '🏆 Novo resultado disponível!',
-          body: `Concurso ${caixa.numero} sorteado em ${caixa.data}. Toque para conferir seus jogos.`,
-          data: { tipo: 'novo_resultado', numero: caixa.numero },
-        },
-        trigger: null, // imediato
-      });
+      if (Notifications) {
+        await Notifications.scheduleNotificationAsync({
+          identifier: ID_NOVO_RESULTADO,
+          content: {
+            title: '🏆 Novo resultado disponível!',
+            body: `Concurso ${caixa.numero} sorteado em ${caixa.data}. Toque para conferir seus jogos.`,
+            data: { tipo: 'novo_resultado', numero: caixa.numero },
+          },
+          trigger: null, // imediato
+        });
+      }
       return true;
     }
     return false;
@@ -114,6 +122,7 @@ export async function verificarNovoResultado(db: SQLiteDatabase): Promise<boolea
 export async function getLembreteAgendado(): Promise<{ hora: number; minuto: number } | null> {
   try {
     const Notifications = getNotificationsLib();
+    if (!Notifications) return null;
     const agendados = await Notifications.getAllScheduledNotificationsAsync();
     const lembrete = agendados.find((n: any) => n.identifier === ID_LEMBRETE);
     if (!lembrete) return null;
@@ -137,6 +146,7 @@ export async function registrarPushToken(): Promise<string | null> {
 
   try {
     const Notifications = getNotificationsLib();
+    if (!Notifications) return null;
     const { status: existingStatus } = await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
 

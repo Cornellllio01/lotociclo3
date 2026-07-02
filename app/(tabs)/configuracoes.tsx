@@ -11,6 +11,7 @@ import {
   cancelarLembrete,
   verificarNovoResultado,
   getLembreteAgendado,
+  isExpoGo,
 } from '../../src/notifications';
 import { ultimoConcurso } from '../../src/database/db';
 
@@ -137,6 +138,17 @@ export default function ConfiguracoesScreen() {
       <View style={s.secao}>
         <Text style={s.secaoTitulo}>🔔 Notificações</Text>
 
+        {isExpoGo && (
+          <View style={[s.card, { borderColor: C.amarelo, borderWidth: 1 }]}>
+            <Text style={{ color: C.amarelo, fontSize: 13, fontWeight: '600' }}>
+              ⚠️ Notificações indisponíveis no Expo Go
+            </Text>
+            <Text style={{ color: C.textoSec, fontSize: 12, marginTop: 4 }}>
+              O agendamento de lembretes e notificações locais/remotas requer a execução de um Development Build nativo.
+            </Text>
+          </View>
+        )}
+
         <View style={s.card}>
           <View style={s.switchRow}>
             <View style={{ flex: 1 }}>
@@ -146,6 +158,7 @@ export default function ConfiguracoesScreen() {
             <Switch
               value={notifAtiva}
               onValueChange={toggleNotificacao}
+              disabled={isExpoGo}
               trackColor={{ false: C.border, true: C.accent }}
               thumbColor={notifAtiva ? C.accentLight : C.textoSec}
             />
