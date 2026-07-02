@@ -26,6 +26,9 @@
       "eas": {
         "projectId": "8b5c9069-90da-4029-813a-71f82cdcaa13"
       }
-    }
+    },
+    "plugins": [
+      "expo-sqlite"
+    ]
   }
 }
