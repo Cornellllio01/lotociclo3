@@ -2,7 +2,7 @@ import { Tabs, useRouter } from 'expo-router';
 import { Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect } from 'react';
-import * as Notifications from 'expo-notifications';
+import { registrarPushToken } from '../../src/notifications';
 
 function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
   return (
@@ -17,14 +17,35 @@ export default function TabsLayout() {
   const router = useRouter();
 
   useEffect(() => {
-    // Redireciona quando clicar em uma notificação de novo resultado
-    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
-      const data = response.notification.request.content.data;
-      if (data?.tipo === 'novo_resultado') {
-        router.push('/resultado');
+    let active = true;
+    let subscription: any = null;
+
+    // Registra token se for dev build
+    registrarPushToken();
+
+    async function setupListener() {
+      try {
+        const Notifications = await import('expo-notifications');
+        if (!active) return;
+        subscription = Notifications.addNotificationResponseReceivedListener(response => {
+          const data = response.notification.request.content.data;
+          if (data?.tipo === 'novo_resultado') {
+            router.push('/resultado');
+          }
+        });
+      } catch (err) {
+        console.warn('Erro ao configurar listener de notificações:', err);
       }
-    });
-    return () => subscription.remove();
+    }
+
+    setupListener();
+
+    return () => {
+      active = false;
+      if (subscription) {
+        subscription.remove();
+      }
+    };
   }, [router]);
 
   return (
