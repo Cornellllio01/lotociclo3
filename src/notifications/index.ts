@@ -2,9 +2,9 @@ import { Platform } from 'react-native';
 import { SQLiteDatabase } from 'expo-sqlite';
 import { ultimoConcurso } from '../database/db';
 import { buscarUltimo } from '../api/caixa';
-import Constants from 'expo-constants';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 
-const isExpoGo = Constants.appOwnership === 'expo';
+export const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
 // ─── IDs fixos para identificação das notificações ───────────────────────────
 const ID_LEMBRETE = 'lotociclo-lembrete-apostas';

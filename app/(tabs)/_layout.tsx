@@ -2,7 +2,7 @@ import { Tabs, useRouter } from 'expo-router';
 import { Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useEffect } from 'react';
-import { registrarPushToken } from '../../src/notifications';
+import { registrarPushToken, isExpoGo } from '../../src/notifications';
 
 function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
   return (
@@ -38,7 +38,9 @@ export default function TabsLayout() {
       }
     }
 
-    setupListener();
+    if (!isExpoGo) {
+      setupListener();
+    }
 
     return () => {
       active = false;
