@@ -1,0 +1,32 @@
+name: Atualizar Resultados Lotofácil
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Todo dia às 21h BRT (00h UTC)
+  workflow_dispatch:       # Permite rodar manualmente
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependências
+        run: pip install requests
+
+      - name: Rodar script
+        run: python scripts/atualizar_resultados.py
+
+      - name: Commit e push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/resultados.json
+          git diff --staged --quiet || git commit -m "chore: atualizar resultados $(date +'%d/%m/%Y')"
+          git push
