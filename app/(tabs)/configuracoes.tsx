@@ -68,6 +68,7 @@ export default function ConfiguracoesScreen() {
   const [hora, setHora] = useState(17);
   const [minuto, setMinuto] = useState(0);
   const [verificando, setVerificando] = useState(false);
+  const [baixando, setBaixando] = useState(false);
   const [ultimoConcursoNum, setUltimoConcursoNum] = useState<number | null>(null);
 
   useFocusEffect(useCallback(() => {
@@ -127,6 +128,19 @@ export default function ConfiguracoesScreen() {
       Alert.alert('Erro', 'Não foi possível verificar. Cheque a conexão com a internet.');
     } finally {
       setVerificando(false);
+    }
+  }
+
+  async function baixarHistorico() {
+    setBaixando(true);
+    try {
+      const { baixarHistorico: baixar } = await import('../../src/api/caixa');
+      await baixar(db, 50);
+      Alert.alert('✅ Histórico baixado!', '50 concursos importados com sucesso.');
+    } catch (e: any) {
+      Alert.alert('Erro', e.message || 'Não foi possível baixar o histórico.');
+    } finally {
+      setBaixando(false);
     }
   }
 
@@ -196,6 +210,17 @@ export default function ConfiguracoesScreen() {
               <ActivityIndicator size="small" color="#fff" />
             ) : (
               <Text style={s.btnTxt}>🔍 Verificar Novo Resultado</Text>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[s.btn, { backgroundColor: '#0f766e', marginTop: 4 }, baixando && s.btnDisabled]}
+            onPress={baixarHistorico}
+            disabled={baixando}
+          >
+            {baixando ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={s.btnTxt}>📥 Baixar Histórico (50 concursos)</Text>
             )}
           </TouchableOpacity>
           <Text style={s.subTxt}>
