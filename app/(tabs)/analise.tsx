@@ -39,7 +39,7 @@ const CORES = {
 };
 
 const PERIODOS = [
-  { label: 'Últ. 10', value: 10 },
+  { label: 'Últ. 5', value: 5 },
   { label: 'Últ. 20', value: 20 },
   { label: 'Últ. 50', value: 50 },
   { label: 'Todos', value: 0 },
@@ -358,6 +358,9 @@ export default function AnaliseScreen() {
             <Text style={styles.secaoTitulo}>🔥 Frequência das Dezenas</Text>
             <Text style={styles.secaoSub}>
               {estatGerais?.totalConcursos ?? 0} concursos analisados
+              {estatGerais?.concursoInicial && estatGerais?.concursoFinal 
+                ? ` (do ${estatGerais.concursoInicial} ao ${estatGerais.concursoFinal})` 
+                : ''}
             </Text>
             {estatGerais && (
               <Heatmap

@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, TextInput,
 } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, router } from 'expo-router';
 import {
   ultimoConcurso, getFixas, salvarJogo, vincularJogoConcurso, listarConcursos,
 } from '../../src/database/db';
@@ -86,14 +86,32 @@ export default function NovoJogo() {
     });
   }
 
-  function surpresinha() {
-    if (!grupos || fixas.length === 0) {
+  async function surpresinha() {
+    if (!grupos || fixas.length === 0 || !ultimo) {
       Alert.alert('Atenção', 'Defina as fixas primeiro na aba Ciclo 🔥');
       return;
     }
     try {
       const tres = gerarTresJogos(grupos.sairam, grupos.naoSairam, fixas);
-      setJogosGerados(tres);
+      const concursoAtual = ultimo.numero;
+
+      for (let i = 0; i < tres.length; i++) {
+        const t = tres[i];
+        const novoJogo: Jogo = {
+          id: uid(),
+          nome: `Surpresinha ${i + 1}`,
+          dezenas: t.dezenas,
+          grupo6: t.grupo6,
+          grupo9: t.grupo9,
+          fixas,
+          teimosinha: 0,
+          criado_em: new Date().toISOString(),
+        };
+        await salvarJogo(db, novoJogo);
+        await vincularJogoConcurso(db, novoJogo.id, concursoAtual, 0);
+      }
+
+      router.push('/resultado');
     } catch (e: any) {
       Alert.alert('Erro', e.message);
     }

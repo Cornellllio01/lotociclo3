@@ -7,6 +7,7 @@ import { useFocusEffect } from 'expo-router';
 import {
   listarConcursos, ultimoConcurso, salvarConcurso, atualizarCiclo,
   getCicloAtivo, resetarCiclo, listarJogosDoConcurso, conferenciaAutomatica, getFixas,
+  listarJogos,
 } from '../../src/database/db';
 import { buscarUltimo, buscarConcurso as buscarConcursoCaixa, sincronizarResultados } from '../../src/api/caixa';
 import { calcularEstatisticas, classificarDezenas, calcularPlacar, CorDezena } from '../../src/utils/lotofacil';
@@ -43,7 +44,7 @@ export default function Resultado() {
       if (lista.length > 0) {
         const novoIdx = lista.length - 1;
         setIdx(novoIdx);
-        await carregarJogos(lista[novoIdx].numero);
+        await carregarJogos(lista[novoIdx].numero, lista);
       }
 
       // Sincronização automática em background
@@ -54,7 +55,7 @@ export default function Resultado() {
           setConcursos(listaAtualizada);
           const novoIdx = listaAtualizada.length - 1;
           setIdx(novoIdx);
-          await carregarJogos(listaAtualizada[novoIdx].numero);
+          await carregarJogos(listaAtualizada[novoIdx].numero, listaAtualizada);
         }
       } catch (err) {
         console.warn('Erro ao sincronizar em background:', err);
@@ -64,9 +65,27 @@ export default function Resultado() {
     }
   }
 
-  async function carregarJogos(numero: number) {
-    const j = await listarJogosDoConcurso(db, numero);
-    setJogos(j);
+  async function carregarJogos(numero: number, listaReferencia?: Concurso[]) {
+    const j = await listarJogos(db);
+    const listaRef = listaReferencia || concursos;
+    const conc = listaRef.find(c => c.numero === numero);
+    const dezenasSorteio = conc ? conc.dezenas : [];
+
+    const jConferido: JogoConferido[] = j.map(jogo => {
+      const acertos = dezenasSorteio.length > 0
+        ? jogo.dezenas.filter(d => dezenasSorteio.includes(d)).length
+        : 0;
+      return {
+        ...jogo,
+        acertos,
+        premiacao: 0,
+      };
+    });
+
+    // Ordena por acertos decrescente
+    jConferido.sort((a, b) => b.acertos - a.acertos);
+
+    setJogos(jConferido);
   }
 
   async function navegar(delta: number) {
@@ -188,8 +207,8 @@ export default function Resultado() {
                   <View key={jogo.id} style={s.jogoCard}>
                     <View style={s.jogoHeader}>
                       <Text style={s.jogoNome}>{jogo.nome || jogo.id.slice(0, 8)}</Text>
-                      <Text style={[s.jogoPlacar, jogo.acertos >= 11 && s.jogoPlacarPremio]}>
-                        {jogo.acertos} pts
+                      <Text style={[s.jogoPlacar, placar.total >= 11 && s.jogoPlacarPremio]}>
+                        {placar.total} pts
                       </Text>
                     </View>
                     <Text style={s.jogoPlacarTexto}>{placar.texto}</Text>

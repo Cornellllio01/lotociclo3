@@ -101,10 +101,39 @@ export async function vincularJogoConcurso(
 ): Promise<void> {
   // Vincula ao concurso atual + próximos (teimosinha)
   for (let i = 0; i <= teimosinha; i++) {
+    const targetConcurso = concursoNumero + i;
+
+    // Se o concurso já existir no banco, calcula a conferência de acertos imediatamente
+    const concursoRow = await db.getFirstAsync<{ dezenas: string }>(
+      `SELECT dezenas FROM concursos WHERE numero = ?;`,
+      [targetConcurso]
+    );
+
+    let acertos = 0;
+    let premiacao = 0;
+
+    if (concursoRow) {
+      const jogoRow = await db.getFirstAsync<{ dezenas: string }>(
+        `SELECT dezenas FROM jogos WHERE id = ?;`,
+        [jogoId]
+      );
+      if (jogoRow) {
+        const dezenasJogo: number[] = JSON.parse(jogoRow.dezenas);
+        const dezenasResultado: number[] = JSON.parse(concursoRow.dezenas);
+        acertos = contarAcertos(dezenasJogo, dezenasResultado);
+
+        if (acertos === 15) premiacao = 1;
+        else if (acertos === 14) premiacao = 2;
+        else if (acertos === 13) premiacao = 3;
+        else if (acertos === 12) premiacao = 4;
+        else if (acertos === 11) premiacao = 5;
+      }
+    }
+
     await db.runAsync(
       `INSERT OR IGNORE INTO jogo_concurso (jogo_id, concurso_numero, acertos, premiacao)
-       VALUES (?, ?, 0, 0);`,
-      [jogoId, concursoNumero + i]
+       VALUES (?, ?, ?, ?);`,
+      [jogoId, targetConcurso, acertos, premiacao]
     );
   }
 }
@@ -344,6 +373,8 @@ export interface EstatisticasGerais {
   mediaPrimos: number;
   mediaSoma: number;
   totalConcursos: number;
+  concursoInicial?: number;
+  concursoFinal?: number;
 }
 
 export interface PontoEvolucao {
@@ -370,16 +401,16 @@ export async function obterEstatisticasGerais(
   db: SQLiteDatabase,
   ultimosN: number = 0
 ): Promise<EstatisticasGerais> {
-  let concursos: { dezenas: string }[];
+  let concursos: { numero: number, dezenas: string }[];
 
   if (ultimosN > 0) {
-    concursos = await db.getAllAsync<{ dezenas: string }>(
-      `SELECT dezenas FROM concursos ORDER BY numero DESC LIMIT ?;`,
+    concursos = await db.getAllAsync<{ numero: number, dezenas: string }>(
+      `SELECT numero, dezenas FROM concursos ORDER BY numero DESC LIMIT ?;`,
       [ultimosN]
     );
   } else {
-    concursos = await db.getAllAsync<{ dezenas: string }>(
-      `SELECT dezenas FROM concursos ORDER BY numero DESC;`
+    concursos = await db.getAllAsync<{ numero: number, dezenas: string }>(
+      `SELECT numero, dezenas FROM concursos ORDER BY numero DESC;`
     );
   }
 
@@ -432,6 +463,8 @@ export async function obterEstatisticasGerais(
     mediaPrimos: totalPrimos / totalConcursos,
     mediaSoma: totalSoma / totalConcursos,
     totalConcursos,
+    concursoFinal: concursos[0].numero,
+    concursoInicial: concursos[concursos.length - 1].numero,
   };
 }
 

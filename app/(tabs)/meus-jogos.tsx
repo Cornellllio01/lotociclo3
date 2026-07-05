@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import * as Clipboard from 'expo-clipboard';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, FlatList, Modal,
 } from 'react-native';
@@ -74,12 +75,13 @@ export default function MeusJogos() {
     }
   }
 
-  async function shareWhatsApp(jogo: Jogo) {
+  async function copiarNumeros(jogo: Jogo) {
     try {
-      const texto = jogoParaTexto(jogo);
-      await compartilharWhatsApp(texto);
+      const texto = jogo.dezenas.map(d => String(d).padStart(2, '0')).join(' ');
+      await Clipboard.setStringAsync(texto);
+      Alert.alert('Copiado!', texto);
     } catch (err: any) {
-      Alert.alert('Erro no WhatsApp', err.message || String(err));
+      Alert.alert('Erro ao copiar', err.message || String(err));
     }
   }
 
@@ -125,8 +127,8 @@ export default function MeusJogos() {
           <TouchableOpacity style={s.acaoBtn} onPress={() => compartilhar(jogo)}>
             <Text style={s.acaoBtnTxt}>📤 Compartilhar</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={s.acaoBtn} onPress={() => shareWhatsApp(jogo)}>
-            <Text style={s.acaoBtnTxt}>💬 WhatsApp</Text>
+          <TouchableOpacity style={s.acaoBtn} onPress={() => copiarNumeros(jogo)}>
+            <Text style={s.acaoBtnTxt}>📋 Copiar</Text>
           </TouchableOpacity>
         </View>
       </View>
